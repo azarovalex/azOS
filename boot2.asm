@@ -1,39 +1,58 @@
-org 7C00h
+org 0x7C00
+    jmp boot
 
-start:
-        sti           ; enable interrupts
+    label disk_id byte at $$
+    boot_msg db "PeaceOS boot loader. Version 0.04",13,10,0
+    reboot_msg db "Press any key to reboot...",13,10,0
 
-        xor ax, ax
-        mov al, 3h
-        int 10h
+write_str:
+        push ax si
+        mov ah, 0x0E
+ @:
+        lodsb
+        test al, al
+        jz @1
+        int 0x10
+        jmp @
+ @1:
+        pop si ax
+        ret
 
-        mov si, boot_msg
+error:
+        pop si
         call write_str
 
 reboot:
         mov si, reboot_msg
         call write_str
-        xor ah,ah
+        xor ah, ah
         int 0x16
         jmp 0xFFFF:0
 
-write_str:
-        push ax si
-        mov ah, 0x0E
-write_str_next_symbol:
-        lodsb
-        test al,al
-        jz write_str_end
-        int 0x10
-        jmp write_str_next_symbol
-write_str_end:
-        pop si ax
-        ret
+boot:
 
-boot_msg db "tOS boot loader. Version 0.04",10,13,0
-reboot_msg db "Press any key to reboot...",10,13,0
+        jmp 0:@2
+ @2:
+        mov ax, cs
+        mov ds, ax
+        mov es, ax
+
+        mov ss, ax
+        mov sp, $$
+
+        sti
+        xor ax,ax
+        mov al,3h
+        int 10h
+
+        mov [disk_id], dl
+
+        mov si, boot_msg
+        call write_str
+
+        jmp reboot
+
 rb 510 - ($ - $$)
 db 0x55,0xAA
-
 
 
