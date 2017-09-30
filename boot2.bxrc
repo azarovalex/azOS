@@ -1,3 +1,0 @@
-megs: 64
-boot: floppy
-floppya: 1_44=boot2.bin, status=inserted 
