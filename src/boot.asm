@@ -1,64 +1,66 @@
-org 0x7C00
+use16 
+org 7C00h 
 
-start:
+jmp 0x0000:boot
+nop
+
+boot:
+	xor ax, ax
+	mov ds, ax
+    mov es, ax
 	cli
-
-	mov ax, 17 * 32 + 4000 + 256
 	mov ss, ax
-	mov sp, 256 * 16
-
+	mov sp, 0x7C00
 	sti
 
-	mov ax, 07C0h
-	mov ds, ax
-	mov es, ax
-	mov fs, ax
-	mov gs, ax
+	mov al, 1
+	mov bx, 0x7E00
+	mov cx, 0x0002
+	xor  dh, dh
+	call read_sectors_16
+	jmp 0000:7E00h
 
-	mov ax, 0
-	int 13h
-	jc disk_reset_error
 
-	push es				; save es
+; read_sectors_16
+;
+; Reads sectors from disk into memory using BIOS services
+;
+; input:    dl      = drive
+;           ch      = cylinder[7:0]
+;           cl[7:6] = cylinder[9:8]
+;           dh      = head
+;           cl[5:0] = sector (1-63)
+;           es:bx  -> destination
+;           al      = number of sectors
+;
+; output:   cf (0 = success, 1 = failure)
 
-	mov ax, 07E0h		; destination location (address of _start)
-	mov es, ax			; destination location
-	mov bx, 0			; index 0
+read_sectors_16:
+    pusha
+    mov si, 0x02    ; maximum attempts - 1
+.top:
+    mov ah, 0x02    ; read sectors into memory (int 0x13, ah = 0x02)
+    int 0x13
+    jnc .end        ; exit if read succeeded
+    dec si          ; decrement remaining attempts
+    jc  .end        ; exit if maximum attempts exceeded
+    xor ah, ah      ; reset disk system (int 0x13, ah = 0x00)
+    int 0x13
+    jnc .top        ; retry if reset succeeded, otherwise exit
+.end:
+    popa
+    retn
 
-	mov ah, 2			; read sectors function
-	mov al, 1		; number of sectors
-	mov ch, 0			; cylinder number
-	mov dh, 0			; head number
-	mov cl, 2			; starting sector number
-	int 13h				; call BIOS interrupt
 
-	jc disk_read_error
+times 510-($-$$) db 0 
+dw 0AA55h
 
-	pop es
-
-	mov si, boot_msg
+org 7E00h
+_start:
+	mov si, hello_msg
 	call _puts
+	jmp $
 
-	jmp word 07E00000h
-
-disk_reset_error:
-	mov si, disk_reset_error_msg
-	jmp fatal
-
-disk_read_error:
-	mov si, disk_read_error_msg
-
-fatal:
-	call _puts
-
-	mov ax, 0
-	int 16h
-
-	mov ax, 0
-	int 19h
-
-; void _puts(char*)
-; accepts a pointer to a string in si
 _puts:
 	lodsb
 
@@ -73,22 +75,8 @@ _puts:
 .end:
 	ret
 
-disk_reset_error_msg db 'Could not reset disk', 0
-disk_read_error_msg  db 'Could not read disk', 0
-boot_msg db 'Booting azOS...'
-
-times 510 - ($ - $$) db 0
-dw 0xAA55
-
-_start:
-	mov si, hello_msg
-	call _puts
-	
-	jmp $
-
 hello_msg db 'azOS bootloader works!', 0
-
-times 17 * 512 - ($ - $$) db 0 ; pad to IMAGE_SIZE	
+times 512-($-$$) db 0
 
 
 
