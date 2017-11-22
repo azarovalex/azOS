@@ -1,5 +1,17 @@
-@ copy "\\vmware-host\Shared Folders\azarovalex\Documents\OS\src\boot.asm" C:\fasmw17164\OS\boot.asm
-@ C:\fasmw17164\fasm.exe C:\fasmw17164\OS\boot.asm
-@ copy C:\fasmw17164\OS\boot.bin "\\vmware-host\Shared Folders\azarovalex\Documents\OS\build\boot.bin"
-@ copy C:\fasmw17164\OS\boot.bin "\\vmware-host\Shared Folders\azarovalex\Documents\OS\build\boot.img"
+@ echo Check for fasm.exe...
+@ if not exist C:\fasmw17164\fasm.exe (
+    echo FAIL: Plz, specify path to FASM compier!
+    @ pause
+    exit
+)
+
+@ echo Building bootloader...
+@ cd src
+@ C:\fasmw17164\fasm.exe boot.asm
+@ move boot.img ..\build\azOS.img
+
+@ echo Building kernel
+@ C:\fasmw17164\fasm.exe kernel.asm
+@ move kernel.bin ..\build\AZOSKERN.BIN
+
 @ pause
