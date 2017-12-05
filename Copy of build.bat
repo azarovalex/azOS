@@ -11,8 +11,6 @@
 @ move boot.img ..\build\azOS.img
 
 @ echo Building kernel
-@ cd kernel
 @ C:\fasmw17164\fasm.exe kernel.asm
-@ move kernel.bin ..\..\build\AZOSKERN.BIN
-
+@ move kernel.bin ..\build\AZOSKERN.BIN
 @ pause

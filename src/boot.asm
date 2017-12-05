@@ -94,7 +94,7 @@ FoundKernel:
     int 40h
 
 LoadFileSector:  ; Actually is a cycle
-    mov ax, 50h                ; Kernel will be loaded to 0x0500 (0050:0000)
+    mov ax, 90h                ; Kernel will be loaded to 0x0500 (0050:0000)
     mov es, ax
     mov bx, word [pointer]     ; Track the address we are writing to
     mov ax, word [cluster]     ; Track the cluster we are reading from
@@ -133,14 +133,16 @@ NextClusterCont:
     jmp LoadFileSector
 
 BootEnd:
-    pop ax
     mov dl, byte [bootdisk]
 
-    mov ax, 50h
+    mov ax, 90h                   ; Init segment registers
     mov ds, ax
     mov es, ax
     mov ss, ax
-    jmp 50h:0h
+    mov fs, ax
+    mov gs, ax
+
+    jmp 90h:0h
 
 ;-------------------------------------------------------------------
 ;                     Bootloader routines
@@ -151,17 +153,16 @@ Reboot:
     xor ax, ax
     int 19h
 
-
 PrintString:
     pusha
     mov ah, 0Eh
-.repeat:
+.Repeat:
     lodsb
     cmp al, 0
-    je .done
+    je  .Done
     int 10h
-    jmp .repeat
-.done:
+    jmp .Repeat
+.Done:
     popa
     ret
 
@@ -220,7 +221,6 @@ SetIntHandler:     ; DS:ES - interrupt handler, AL - interrupt number
     cli
     xchg [es:di], dx    ; Offset
     xchg [es:di+2], bx  ; Segment
-    sti
 iret
 
 

@@ -1,3 +1,6 @@
+int 21, AH=01h - read character from stdin with echo
+
+
 int 40h - read from floppy (wrapper over int 13h)
   ES:BX - location
   AX - first sector number
