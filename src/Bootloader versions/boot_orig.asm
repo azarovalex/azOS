@@ -49,31 +49,9 @@ BootStart:
     mov dx, ReadFromDisk
     int 42h
 
-    mov ax, 41h
-    mov dx, LoadFileByName
-    int 42h
-
-    mov dx, 90h
-    mov gs, dx
-    mov si, kern_name
-    int 41h
-
-    mov dl, byte [bootdisk]
-
-    mov ax, 90h                   ; Init segment registers
-    mov ds, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
-
-    jmp 90h:0h
-
-;===================================================
-;
-;
-LoadFileByName:
+LoadRootDir:
     mov bx, Buffer       ; ES:BX - buffer where root directory from disk will be loaded
-    mov ax, 0x07c0
+    mov ax, ds
     mov es, ax
     mov ax, 19           ; Sector with root directory
     mov cx, 14           ; Root directory size in sectors
@@ -81,24 +59,22 @@ LoadFileByName:
     int 40h              ; ReadFromDisk
 
 SearchKernel:
-    mov ax, 0x07c0          ; Set ES:DI to filename for cmpsb
+    mov ax, ds          ; Set ES:DI to filename for cmpsb
     mov es, ax
     mov di, Buffer
 
     mov cx, 224         ; Repeat comparison for max of 224 files in root directory
-    mov dx, 0
-    mov bx, si
+
 NextFilename:
     xchg cx, ax         ; Cycle in cycle, so save cx
-    mov si, bx
-    ;mov si, kern_name
+
+    mov si, kern_name
     mov cx, 11          ; Kernel filename length
     rep cmpsb           ; Compare next filename (ES:DI) with kern_name (DS:SI)
     je FoundKernel
 
-    add dx, 32
     mov di, Buffer      ; Inc DI to the next filename
-    add di, dx
+    add di, 32
 
     xchg ax, cx
     loop NextFilename
@@ -108,8 +84,6 @@ NextFilename:
     jmp Reboot
 
 FoundKernel:
-    push 0x07c0
-    pop ds
     mov ax, word [es:di + $0F]    ; Get first kernel cluster from root directory
     mov word [cluster], ax        ; Save first kernel cluster
 
@@ -120,7 +94,7 @@ FoundKernel:
     int 40h
 
 LoadFileSector:  ; Actually is a cycle
-    mov ax, gs                ; Kernel will be loaded to 0x0500 (0050:0000)
+    mov ax, 90h                ; Kernel will be loaded to 0x0500 (0050:0000)
     mov es, ax
     mov bx, word [pointer]     ; Track the address we are writing to
     mov ax, word [cluster]     ; Track the cluster we are reading from
@@ -159,8 +133,16 @@ NextClusterCont:
     jmp LoadFileSector
 
 BootEnd:
-    mov [pointer], 0
-    iret
+    mov dl, byte [bootdisk]
+
+    mov ax, 90h                   ; Init segment registers
+    mov ds, ax
+    mov es, ax
+    mov ss, ax
+    mov fs, ax
+    mov gs, ax
+
+    jmp 90h:0h
 
 ;-------------------------------------------------------------------
 ;                     Bootloader routines
@@ -193,15 +175,8 @@ ResetFloppy:
     pop dx
     pop ax
     ret
-;===============================================
-;  int 40h - read from floppy (wrapper over Int 13h)
-;    ES:BX - location
-;    AX - first sector number
-;    CX - size in sectors
+
 ReadFromDisk:
-    push ds
-    push 0x07c0
-    pop ds
     push cx
 
     push ax
@@ -235,7 +210,6 @@ ReadFromDisk:
 
 .Ok:
     popa
-    pop ds
     iret
 
 SetIntHandler:     ; DS:ES - interrupt handler, AL - interrupt number

@@ -1,0 +1,33 @@
+int 40h - read from floppy (wrapper over Int 13h)
+  ES:BX - location
+  AX - first sector number
+  CX - size in sectors
+
+int 41h - load file to buffer
+  DS:SI - Filename string
+  GS - segment location
+  
+
+int 42h - set interrupt vector
+  AL - interrupt number
+  DS:DX - new interrupt handler
+
+
+
+
+
+
+
+Memory layout:
+
+.------------------.
+|  0x0000 - IVT    |
+.------------------.
+|  0x0900 - kernel |
+.------------------.
+|  0x7c00 - boot   |
+.------------------.
+|  0x7e00 - buffer |
+.------------------.
+| 0x10000 - com    |
+.------------------.
