@@ -28,11 +28,12 @@ BS_VolLab      db      "AZOS       "
 BS_FilSysType  db      "FAT12   "
 
 BootStart:
-    mov ax, 07C0h       ; Compute the stack segment
-    add ax, 544         ; 32 (bootloader size) + 512(buffer for File Alloc Table)
+    xor ax,ax
+    ;mov ax, 07C0h       ; Compute the stack segment
+    ;add ax, 544         ; 32 (bootloader size) + 512(buffer for File Alloc Table)
     cli
     mov ss, ax
-    mov sp, 2048        ; Stack size
+    mov sp, 7BFEh        ; Stack size
     sti
 
     mov ax, 07C0h
@@ -238,9 +239,10 @@ ReadFromDisk:
     pop ds
     iret
 
-SetIntHandler:     ; DS:ES - interrupt handler, AL - interrupt number
+SetIntHandler:     ; DS:DX - interrupt handler, AL - interrupt number
     xor bx, bx     ; Interupt address is at segment = 0, offset = intNum * 4
     mov es, bx     ; So we need 0 in ES
+    xor ah, ah
     shl ax, 2      ; Get interrupt address in IVT
     mov di, ax
     mov bx, ds

@@ -1,0 +1,1 @@
+@ C:\TD\td.exe TESTAPP.COM

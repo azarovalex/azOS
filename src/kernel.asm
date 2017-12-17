@@ -2,15 +2,29 @@ format binary as 'BIN'
 use16
 
 Kernel:
+    call InitOS        ; Set up enviroment for kernel
+    jmp GUI
+
+InitOS:
     mov ax, 1003h   ; Disable blinking
     xor bl, bl
     int 10h
 
-;    call SetInterrupts
+    ; Stack is already setted up properly in the bootloader
 
-    call GUI
-    jmp $
+    mov al, 20h
+    mov dx, Int20h
+    int 42h
 
+    mov al, 43h
+    mov dx, move_cursor
+    int 42h
+
+    mov al, 44h
+    mov dx, print_string
+    int 42h
+
+    ret
 ;
 ; ax - buffer for filenames
 ;
@@ -102,20 +116,71 @@ get_file_list:
 ; ax - filename
 ;
 OpenApp:
-    mov si, ax
+    mov si, ax       ; Load app to RAM
     mov ax, 0x1010
     mov gs, ax
     int 41h
-    mov ax, 1000h
+
+    mov bl, 0Fh
+    mov dl, 0
+    mov dh, 0
+    mov si, 80
+    mov di, 25
+    call draw_rectangle
+
+    mov dh, 0
+    mov dl, 0
+    int 43h
+
+    mov ax, 1000h    ; Set up registers
     mov ds, ax
     mov es, ax
     mov fs, ax
     mov gs, ax
+    mov ss, ax
+    mov ax, sp
+    mov [TempStackPos], ax
+    mov sp, 0xFFFE
     call 1000h:100h
     jmp GUI
 
+TempStackPos dw 0
+
+Int20h:
+    mov ax, 90h
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+    xor ax, ax
+    mov ss, ax
+    mov sp, [TempStackPos]
+    jmp GUI
+
+
+move_cursor:
+    pusha
+    mov bh, 0
+    mov ah, 2
+    int 10h
+    popa
+    iret
+
+
+print_string:
+    pusha
+    mov ah, 0Eh
+.next_char:
+    lodsb
+    cmp al, 0
+    je .end
+    int 10h
+    jmp .next_char
+.end:
+    popa
+    iret
+
 include "gui.asm"
-;include "interrupts.asm"
 
 KernelBuffer:
 

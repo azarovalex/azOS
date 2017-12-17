@@ -30,25 +30,30 @@ GUI:
     add dh, al
     dec al
     mov [.curr_cursor_pos], al
-    call move_cursor
+    ;call move_cursor
+    int 43h
     mov si, .nocursor
-    call print_string
+    ;call print_string
+    int 44h
 
     mov dh, 15
     add dh, [.curr_cursor_pos]
     mov dl, 29
-    call move_cursor
+    ;call move_cursor
+    int 43h
     mov si, cursor
-    call print_string
+    ;call print_string
+    int 44h
 
     mov dh, 26
     mov al, 0
-    call move_cursor
+    ;call move_cursor
+    int 43h
 
     jmp .choose_loop
 
 .down:
-    cmp [.curr_cursor_pos], 5       ; already at the bottom? then return
+    cmp [.curr_cursor_pos], 3       ; already at the bottom? then return
     je .choose_loop
 
     mov dh, 15                      ; redraw cursor (->) position
@@ -57,43 +62,46 @@ GUI:
     add dh, al
     add al, 1
     mov [.curr_cursor_pos], al
-    call move_cursor
+    ;call move_cursor
+    int 43h
     mov si, .nocursor
-    call print_string
+    ;call print_string
+    int 44h
 
     mov dh, 15
     add dh, [.curr_cursor_pos]
     mov dl, 29
-    call move_cursor
+    ;call move_cursor
+    int 43h
     mov si, cursor
-    call print_string
+    ;call print_string
+    int 44h
 
     mov dh, 26
     mov al, 0
-    call move_cursor
+    ;call move_cursor
+    int 43h
 
 
     jmp .choose_loop
 
 .enter:                           ; Run choosed app
-    cmp [.curr_cursor_pos], 1
-    call FileManager
-    cmp ax, 0                     ; User want to run an app?
-    jne OpenApp                   ; Yeah
-    jmp GUI                       ; No (he pressed Esc in the File Manager)
+    cmp [.curr_cursor_pos], 3
+    je shut_down
 
     cmp [.curr_cursor_pos], 2
-    ;call InitOS
+    je change_colors
 
-    cmp [.curr_cursor_pos], 3
-    ;je textedit
+    ;cmp [.curr_cursor_pos], 1
+    call FileManager
 
-    cmp [.curr_cursor_pos], 4
-    ;je changecolors
+    cmp ax, 0                     ; User want to run an app?
+    jne OpenApp                   ; Yeah
 
-    cmp [.curr_cursor_pos], 5
-    je shut_down
-    jmp $
+    jmp GUI                       ; No (he pressed Esc in the File Manager)
+
+
+
 
 
 .nocursor   db "  ", 0
@@ -101,64 +109,71 @@ GUI:
 cursor     db "->", 0
 
 
+change_colors:
+   mov ax, [.isNightMode]
+   xor [.isNightMode], 1
+   cmp ax, 0
+   je .night
+.day:
+   mov [window_color], 0xF0
+   mov [header_color], 0xCF
+   mov [shadow_color], 0x00
+   mov [background_color], 0x70
+   jmp GUI
+.night:
+   mov [window_color], 0x82
+   mov [header_color], 0x4F
+   mov [shadow_color], 0x00
+   mov [background_color], 0x90
+   jmp GUI
+
+.isNightMode dw 0
 ;======================================================
 ;
 ;
 main_menu_options:
     mov dh, 14
     mov dl, 30
-    call move_cursor
+    ;call move_cursor
+    int 43h
     mov si, .title
-    call print_string
+    ;call print_string
+    int 44h
 
     mov dh, 16
     mov dl, 32
-    call move_cursor
+    int 43h
     mov si, .line1text
-    call print_string
+    int 44h
 
     mov dh, 17
     mov dl, 32
-    call move_cursor
+    int 43h
     mov si, .line2text
-    call print_string
+    int 44h
 
     mov dh, 18
     mov dl, 32
-    call move_cursor
-    mov si, .line3text
-    call print_string
-
-    mov dh, 19
-    mov dl, 32
-    call move_cursor
-    mov si, .line4text
-    call print_string
-
-    mov dh, 20
-    mov dl, 32
-    call move_cursor
+    int 43h
     mov si, .reboottext
-    call print_string
+    int 44h
 
     mov dh, 16
     mov dl, 29
-    call move_cursor
+    int 43h
     mov si, cursor
-    call print_string
+    int 44h
 
     mov dh, 26
     mov dl, 0
-    call move_cursor
+    int 43h
 
     ret
 
 
 .title      db "Choose something...", 0
 .line1text  db "File Manager", 0
-.line2text  db "Paratrooper", 0
-.line3text  db "Text Edit", 0
-.line4text  db "Change Colors", 0
+.line2text  db "Change Colors", 0
 .reboottext db "Shut down", 0
 
 
@@ -172,18 +187,23 @@ FileManager:
 
     mov dl, 10              ; Show first line of help text...
     mov dh, 4
-    call move_cursor
+    ;call move_cursor
+    int 43h
     mov si, .title_string_1
-    call print_string
+    ;call print_string
+    int 44h
 
     inc dh                  ; ...and the second
-    call move_cursor
+    ;call move_cursor
+    int 43h
     mov si, .title_string_2
-    call print_string
+    ;call print_string
+    int 44h
 
     mov dl, 23              ; Get into position for file list text
     mov dh, 8
-    call move_cursor
+    ;call move_cursor
+    int 43h
 
     mov ax, .buffer
     call get_file_list ; int 43h
@@ -230,7 +250,8 @@ FileManager:
 .newline:
     mov dl, 23                      ; Go back to starting X position
     inc dh                          ; But jump down a line
-    call move_cursor
+    ;call move_cursor
+    int 43h
 
     inc bx                          ; Update the number-of-files counter
     cmp bx, 14                      ; Limit to one page of names
@@ -247,10 +268,12 @@ FileManager:
     mov dh, 8
 
 .more_select:
-    call move_cursor
+    ;call move_cursor
+    int 43h
 
-    mov si, .position_string        ; Show '>>>>>' next to filename
-    call print_string
+    mov si, .position_string        ; Show '->' next to filename
+    ;call print_string
+    int 44h
 
     mov ch, 32
     mov ah, 1
@@ -276,10 +299,12 @@ FileManager:
     jle .another_key
 
     mov dl, 20
-    call move_cursor
+    ;call move_cursor
+    int 43h
 
     mov si, .position_string_blank  ; Otherwise overwrite '>>>>>'
-    call print_string
+    ;call print_string
+    int 44h
 
     dec dh                          ; Row to select (increasing down)
     jmp .more_select
@@ -290,10 +315,12 @@ FileManager:
     jae .another_key
 
     mov dl, 20
-    call move_cursor
+    ;call move_cursor
+    int 43h
 
     mov si, .position_string_blank  ; Otherwise overwrite '>>>>>'
-    call print_string
+    ;call print_string
+    int 44h
 
     inc dh
     jmp .more_select
@@ -356,7 +383,8 @@ draw_logo:
     pusha
     mov dh, [.x_pos]
     mov dl, [.y_pos]
-    call move_cursor
+    ;call move_cursor
+    int 43h
 
     mov si, .logo
     mov ah, 0Eh
@@ -415,9 +443,11 @@ draw_window:
 
     mov dh, 2                    ; Draw [x]
     mov dl, 68
-    call move_cursor
+    ;call move_cursor
+    int 43h
     mov si, .close
-    call print_string
+    ;call print_string
+    int 44h
 
     mov bl, [window_color]
     mov dl, 5         ; X start pos
@@ -442,7 +472,8 @@ draw_window:
 
     mov dh, 25
     mov dl, 0
-    call move_cursor
+    ;call move_cursor
+    int 43h
     ret
 
 .title         db 'azOS - 0.1a', 0
@@ -450,7 +481,7 @@ draw_window:
 .close         db '[x]', 0
 
 ; Standart GUI colors
-window_color     db 0xF0    ;
+window_color     db 0xF0
 header_color     db 0xCF
 shadow_color     db 0x00
 background_color db 0x70
@@ -465,7 +496,8 @@ draw_background:
 
     mov dh, 0
     mov dl, 0
-    call move_cursor
+    ;call move_cursor
+    int 43h
     mov ah, 09h
     mov al, ' '
     mov bh, 0
@@ -474,17 +506,14 @@ draw_background:
 
     mov dh, 0         ; Draw top string
     mov dl, 1
-    call move_cursor
+    ;call move_cursor
+    int 43h
     pop ax
     mov si, ax
-    call print_string
+    ;call print_string
+    int 44h
 
-;    mov dh, 24        ; Draw bottom string
-;    mov dl, 1
-;    call move_cursor
     pop ax
-;    mov si, ax
-;    call print_string
 
     popa
     ret
@@ -495,7 +524,8 @@ draw_background:
 draw_rectangle:
     pusha
 .draw_line:
-    call move_cursor   ; Position is in already in the registers
+    ;call move_cursor   ; Position is in already in the registers
+    int 43h
 
     mov ah, 09h        ; Color is already in the BL register
     mov al, ' '
@@ -508,35 +538,5 @@ draw_rectangle:
     cmp ax, di
     jne .draw_line
 
-    popa
-    ret
-
-
-
-;===============================================
-;
-;
-move_cursor:
-    pusha
-    mov bh, 0
-    mov ah, 2
-    int 10h
-    popa
-    ret
-
-
-;==============================================
-;
-;
-print_string:
-    pusha
-    mov ah, 0Eh
-.next_char:
-    lodsb
-    cmp al, 0
-    je .end
-    int 10h
-    jmp .next_char
-.end:
     popa
     ret

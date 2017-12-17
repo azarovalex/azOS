@@ -1,3 +1,6 @@
+int 20h - close application
+  No input, just closes the current app
+
 int 40h - read from floppy (wrapper over Int 13h)
   ES:BX - location
   AX - first sector number
@@ -12,8 +15,12 @@ int 42h - set interrupt vector
   AL - interrupt number
   DS:DX - new interrupt handler
 
+int 43h - Move cursor
+  DH - x pos
+  DL - y pos
 
-
+int 44h - Print a null-terminated string to the screen
+  DS:SI - string address
 
 
 
@@ -24,10 +31,20 @@ Memory layout:
 |  0x0000 - IVT    |
 .------------------.
 |  0x0900 - kernel |
+|  OS stack        |
 .------------------.
 |  0x7c00 - boot   |
 .------------------.
 |  0x7e00 - buffer |
 .------------------.
 | 0x10000 - com    |
+| App stack        |
 .------------------.
+
+
+
+Requrements:
+FASM
+WinImage
+ImDisk
+qemu / VMWare
