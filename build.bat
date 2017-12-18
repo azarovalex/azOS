@@ -19,6 +19,7 @@ cd ..
 echo Copying the kernel and apps to the disk image...
 imdisk -a -f build\azOS.img -s 1440K -m B:
 copy build\AZOSKERN.BIN b:\
+copy build\games\*.COM b:\
 copy build\*.COM b:\
 imdisk -D -m B:
 

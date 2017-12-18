@@ -121,14 +121,14 @@ OpenApp:
     mov gs, ax
     int 41h
 
-    mov bl, 0Fh
+    mov bl, 0Fh            ; Clear screen with black
     mov dl, 0
     mov dh, 0
     mov si, 80
     mov di, 25
     call draw_rectangle
 
-    mov dh, 0
+    mov dh, 0              ; Move cursor to the left top of the screen
     mov dl, 0
     int 43h
 
@@ -138,24 +138,24 @@ OpenApp:
     mov fs, ax
     mov gs, ax
     mov ss, ax
-    mov ax, sp
-    mov [TempStackPos], ax
     mov sp, 0xFFFE
-    call 1000h:100h
-    jmp GUI
+    push 0               ; 0x0000 for ret
+    mov ax, 0x20CD       ; Opcode for int 20h
+    mov [es:0], ax  ; ret in app will jump here
+    jmp 1000h:100h
 
-TempStackPos dw 0
-
+; Interrupt for leaving the app
 Int20h:
     mov ax, 90h
     mov ds, ax
-    mov es, ax
     mov fs, ax
     mov gs, ax
+    mov es, ax
     xor ax, ax
     mov ss, ax
-    mov sp, [TempStackPos]
-    jmp GUI
+    mov sp, 0x7bfe
+
+    jmp Kernel
 
 
 move_cursor:
